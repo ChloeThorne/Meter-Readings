@@ -1,6 +1,10 @@
 using Meter_Readings_API.Data;
 using Meter_Readings_API.Helpers;
+using Meter_Readings_API.Interfaces;
 using Meter_Readings_API.Models;
+using Meter_Readings_API.Services;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +15,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<DatabaseContext>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IMeterReadingService, MeterReadingService>();
 
 var app = builder.Build();
 

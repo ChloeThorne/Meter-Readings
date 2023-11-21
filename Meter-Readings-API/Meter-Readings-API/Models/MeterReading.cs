@@ -8,8 +8,6 @@ namespace Meter_Readings_API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int AccountId { get; set; }
-
-        [DataType(DataType.DateTime)]
         public DateTime MeterReadingDateTime { get; set; }
         public int MeterReadValue { get; set; }
         public MeterReading() { }

@@ -1,0 +1,5 @@
+@Meter_Readings_API_HostAddress = http://localhost:5250
+
+GET {{Meter_Readings_API_HostAddress}}/meterreading/
+Accept: application/json
+###
