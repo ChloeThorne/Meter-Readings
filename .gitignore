@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Meter-Readings-API/Meter-Readings-API/bin/Debug/net8.0
+/Meter-Readings-API/Meter-Readings-API/obj
+/Meter-Readings-API/.vs/Meter-Readings-API
