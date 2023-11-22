@@ -43,7 +43,7 @@ namespace Meter_Readings_API.Helpers
                 PropertyInfo? property = properties.FirstOrDefault(x => x.Name.Equals(columnHeader, StringComparison.InvariantCultureIgnoreCase));
                 if (property == null || property.SetMethod == null)
                 {
-                    throw new Exception($"Property {columnHeader} not found in object {nameof(T)}");
+                    throw new Exception($"Property {columnHeader} not found in object {typeof(T).Name}");
                 }
 
                 columnMetadatas.Add(new ColumnMetadata(property.SetMethod, property.PropertyType));
@@ -69,10 +69,6 @@ namespace Meter_Readings_API.Helpers
                 catch(FormatException ex)
                 {
                     logger.LogWarning($"Unable to convert {columns[i]} to {columnMetadata[i].PropertyType} due to the following exception: " + ex.Message);
-                }
-                catch(Exception ex)
-                {
-                    logger.LogError(ex.Message);
                 }
             }
 
