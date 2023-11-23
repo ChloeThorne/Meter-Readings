@@ -113,6 +113,7 @@ const MeterReadings: FC<MeterReadingsProps> = () => {
         </Button>
       </div>
       <MeterReadingUploadResultModal isOpen={meterReadingUploadResultIsOpen} onOpen={meterReadingUploadResultOnOpen} onClose={meterReadingUploadResultOnClose} meterReadingUploadResult={meterReadingUploadResult}></MeterReadingUploadResultModal>
+      <CreateMeterReadingModal isOpen={createMeterReadingIsOpen} onOpen={createMeterReadingOnOpen} onClose={createMeterReadingOnClose} reloadPageDate={fetchPageData}></CreateMeterReadingModal>
 
     </div>
   );
