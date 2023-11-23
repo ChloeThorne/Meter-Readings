@@ -1,8 +1,7 @@
 ﻿using Meter_Readings_API.Interfaces;
 using Meter_Readings_API.Models;
-using Meter_Readings_API.Services;
+using Meter_Readings_API.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Text;
 
 namespace Meter_Readings_API.Controllers
@@ -11,12 +10,27 @@ namespace Meter_Readings_API.Controllers
     [Route("[controller]")]
     public class MeterReadingController : Controller
     {
-        private IMeterReadingService _meterReadingService { get; set; }
+        /// <summary>
+        /// Gets or sets the meter reading service.
+        /// </summary>
+        private IMeterReadingService meterReadingService { get; set; }
+
+        /// <summary>
+        /// Initialises a new instance of <see cref="MeterReadingController"/>
+        /// </summary>
+        /// <param name="meterReadingService">An instance of <see cref="IMeterReadingService"/>.</param>
         public MeterReadingController(IMeterReadingService meterReadingService) 
         { 
-            _meterReadingService = meterReadingService;
+            this.meterReadingService = meterReadingService;
         }
 
+        /// <summary>
+        /// Upload a meter reading file to be processed and added to the database.
+        /// </summary>
+        /// <param name="formFile">The form file containing the file to be uploaded.</param>
+        /// <response code="200">Indicates that request has been processed successfully.</response>
+        /// <response code="500">Indicates that request an error occurred on the server while processing the request.</response>
+        /// <returns>A response with <see cref="UploadMeterReadingsViewModel"/>.</returns>
         [HttpPost]
         [Route("meter-reading-uploads")]
         [Produces<UploadMeterReadingsViewModel>]
@@ -33,7 +47,7 @@ namespace Meter_Readings_API.Controllers
                     }
                 }
 
-                UploadMeterReadingsViewModel vm = await _meterReadingService.UploadFromCsv(stringBuilder.ToString());
+                UploadMeterReadingsViewModel vm = await meterReadingService.UploadFromCsv(stringBuilder.ToString());
                 return Ok(vm);
             }
             catch(Exception ex)
@@ -42,12 +56,21 @@ namespace Meter_Readings_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Create a single meter reading in the database.
+        /// </summary>
+        /// <param name="meterReading">The meter reading to be inserted into the database.</param>
+        /// <response code="204">Indicates that the entity was successfully inserted into the database.</response>
+        /// <response code="400">Indicates that a validation error happened while inserting the entity into the database.</response>
+        /// <response code="500">Indicates that request an error occurred on the server while processing the request.</response>
+        /// <returns>A response with no body.</returns>
         [HttpPost]
-        public async Task<IActionResult> Create(MeterReading meterReading)
+        public async Task<IActionResult> Create(CreateMeterReadingViewModel meterReadingViewModel)
         {
             try
             {
-                bool created = await _meterReadingService.Create(meterReading);
+                MeterReading meterReading = new MeterReading(meterReadingViewModel.AccountId, meterReadingViewModel.MeterReadingDateTime, meterReadingViewModel.MeterReadValue);
+                bool created = await meterReadingService.Create(meterReading);
                 if(created)
                 {
                     return Created();
@@ -61,12 +84,20 @@ namespace Meter_Readings_API.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Gets all meter reading entities in the database.
+        /// </summary>
+        /// <response code="200">Indicates that the requested meter readings were found.</response>
+        /// <response code="500">Indicates that request an error occurred on the server while processing the request.</response>
+        /// <returns>A response with <see cref="IEnumerable{MeterReading}"/>.</returns>
         [HttpGet]
+        [Produces<IEnumerable<MeterReading>>]
         public IActionResult Get() 
         {
             try
             {
-                List<MeterReading> meterReadings = _meterReadingService.Get();
+                List<MeterReading> meterReadings = meterReadingService.Get();
                 return Ok(meterReadings);
             }
             catch (Exception ex)
@@ -74,13 +105,21 @@ namespace Meter_Readings_API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
-        
-        [HttpGet("/{id}")]
+
+        /// <summary>
+        /// Get a single meter reading entities in the database.
+        /// </summary>
+        /// <response code="200">Indicates that the requested meter reading was found.</response>
+        /// <response code="404">Indicates that the requested meter reading does not exist.</response>
+        /// <response code="500">Indicates that request an error occurred on the server while processing the request.</response>
+        /// <returns>A response with <see cref="MeterReading"/>.</returns>
+        [HttpGet("{id}")]
+        [Produces<MeterReading>]
         public IActionResult Get(int id)
         {
             try
             {
-                MeterReading? meterReading = _meterReadingService.Get(id);
+                MeterReading? meterReading = meterReadingService.Get(id);
                 if(meterReading != null)
                 {
                     return Ok(meterReading);
@@ -94,12 +133,17 @@ namespace Meter_Readings_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Updates a single entity in the database.
+        /// </summary>
+        /// <param name="meterReading">The meter reading entity to be updated.</param>
+        /// <returns>A response with no body.</returns>
         [HttpPut]
         public async Task<IActionResult> Update(MeterReading meterReading)
         {
             try
             {
-                bool updated = await _meterReadingService.Update(meterReading);
+                bool updated = await meterReadingService.Update(meterReading);
                 if(updated)
                 {
                     return Ok();
@@ -113,12 +157,17 @@ namespace Meter_Readings_API.Controllers
             }
         }
 
-        [HttpDelete("/{id}")]
+        /// <summary>
+        /// Deletes an entity by ID from the database.
+        /// </summary>
+        /// <param name="id">The ID of the entity to delete.</param>
+        /// <returns>A response with no body.</returns>
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                bool deleted = await _meterReadingService.Delete(id);
+                bool deleted = await meterReadingService.Delete(id);
                 if(deleted)
                 {
                     return Ok();
