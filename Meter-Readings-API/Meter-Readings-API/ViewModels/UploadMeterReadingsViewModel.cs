@@ -1,4 +1,4 @@
-﻿namespace Meter_Readings_API.Models
+﻿namespace Meter_Readings_API.ViewModels
 {
     public class UploadMeterReadingsViewModel
     {

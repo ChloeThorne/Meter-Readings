@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Meter_Readings_API.Helpers;
+using Meter_Readings_API.Interfaces;
 using Meter_Readings_API.Models;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,7 +25,8 @@ namespace Meter_Readings_API.Tests.Helper
                                 456, 22/11/2023 17:40, 67890,";
 
             // Act
-            List<MeterReading> actualReadings = CsvHelper<MeterReading>.ReadCsv(csvContent);
+            ICsvHelper<MeterReading> csvHelper = new CsvHelper<MeterReading>();
+            List<MeterReading> actualReadings = csvHelper.ReadCsv(csvContent);
 
             // Assert
             actualReadings.Should().NotBeNull().And.BeEquivalentTo(expectedReadings);
@@ -44,9 +46,10 @@ namespace Meter_Readings_API.Tests.Helper
             string headerRow = "AccountId,MeterReadingDateTime,MeterReadValue,";
 
             // Act
-            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("GetColumnMetadata", BindingFlags.NonPublic | BindingFlags.Static);
+            CsvHelper<MeterReading> helper = new CsvHelper<MeterReading>();
 
-            List<ColumnMetadata> actualColumnMetadata = method.Invoke(null, new object[] { headerRow }) as List<ColumnMetadata>;
+            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("GetColumnMetadata", BindingFlags.NonPublic | BindingFlags.Instance);
+            List<ColumnMetadata> actualColumnMetadata = method.Invoke(helper, new object[] { headerRow }) as List<ColumnMetadata>;
 
             // Assert
             actualColumnMetadata.Should().NotBeNull().And.BeEquivalentTo(expectedColumnMetadata);
@@ -59,9 +62,10 @@ namespace Meter_Readings_API.Tests.Helper
             string headerRow = "Account,MeterReadingDateTime,MeterReadValue,";
 
             // Act
-            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("GetColumnMetadata", BindingFlags.NonPublic | BindingFlags.Static);
+            ICsvHelper<MeterReading> helper = new CsvHelper<MeterReading>();
 
-            Action action = () => method.Invoke(null, new object[] { headerRow });
+            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("GetColumnMetadata", BindingFlags.NonPublic | BindingFlags.Instance);
+            Action action = () => method.Invoke(helper, new object[] { headerRow });
 
             // Assert
             action.Should().Throw<Exception>().WithInnerException<Exception>().WithMessage("Property Account not found in object MeterReading");
@@ -83,9 +87,11 @@ namespace Meter_Readings_API.Tests.Helper
             };
 
             // Act
-            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("ConvertRowToObject", BindingFlags.NonPublic | BindingFlags.Static);
 
-            MeterReading actualMeterReading = method.Invoke(null, new object[] { row, expectedColumnMetadata }) as MeterReading;
+            ICsvHelper<MeterReading> helper = new CsvHelper<MeterReading>();
+            MethodInfo method = helper.GetType().GetMethod("ConvertRowToObject", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            MeterReading actualMeterReading = method.Invoke(helper, new object[] { row, expectedColumnMetadata }) as MeterReading;
             
             // Assert
             actualMeterReading.Should().NotBeNull().And.BeEquivalentTo(expectedMeterReading);
@@ -96,7 +102,6 @@ namespace Meter_Readings_API.Tests.Helper
         {
             // Arrange
             Mock<ILogger> loggerMock = new Mock<ILogger>();
-            typeof(CsvHelper<MeterReading>).GetField("logger", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, loggerMock.Object);
 
             string row = "ABC, 22/12/2023 16:40, 12345,";
 
@@ -108,10 +113,14 @@ namespace Meter_Readings_API.Tests.Helper
             };
 
             // Act
-            MethodInfo method = typeof(CsvHelper<MeterReading>).GetMethod("ConvertRowToObject", BindingFlags.NonPublic | BindingFlags.Static);
+            ICsvHelper<MeterReading> helper = new CsvHelper<MeterReading>();
+            MethodInfo method = helper.GetType().GetMethod("ConvertRowToObject", BindingFlags.NonPublic | BindingFlags.Instance);
 
-            method.Invoke(null, new object[] { row, expectedColumnMetadata });
+            helper.GetType()?.GetField("logger", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(helper, loggerMock.Object);
 
+            MeterReading actualMeterReading = method.Invoke(helper, new object[] { row, expectedColumnMetadata }) as MeterReading;
+
+            // Assert
             loggerMock.Verify(x => x.Log(
             It.Is<LogLevel>(l => l == LogLevel.Warning),
             It.IsAny<EventId>(),

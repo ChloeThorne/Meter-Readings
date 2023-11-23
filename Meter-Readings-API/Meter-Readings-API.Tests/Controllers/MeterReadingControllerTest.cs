@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Meter_Readings_API.Controllers;
 using Meter_Readings_API.Interfaces;
-using Meter_Readings_API.Models;
+using Meter_Readings_API.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

@@ -1,89 +1,108 @@
-﻿using Meter_Readings_API.Data;
+﻿using FluentValidation;
+using Meter_Readings_API.Data;
 using Meter_Readings_API.Helpers;
 using Meter_Readings_API.Interfaces;
 using Meter_Readings_API.Models;
 using Meter_Readings_API.Validators;
+using Meter_Readings_API.ViewModels;
 
 
 namespace Meter_Readings_API.Services
 {
     public class MeterReadingService : IMeterReadingService
     {
-        private DatabaseContext _dbContext { get; set; }
-        private MeterReadingValidator validator { get; set; }
+        private DatabaseContext dbContext { get; set; }
+        private IValidator<MeterReading> validator;
+        private ICsvHelper<MeterReading> meterReadingCsvHelper;
+
+        /// <summary>
+        /// Initialises a new instance of <see cref="MeterReadingService"/>.
+        /// </summary>
+        /// <param name="dbContext">An instance of the <see cref="DatabaseContext"/>.</param>
+        /// <param name="accountService">An instance of the <see cref="IAccountService"/>.</param>
         public MeterReadingService(DatabaseContext dbContext, IAccountService accountService) 
         { 
-            _dbContext = dbContext;
+            this.dbContext = dbContext;
             validator = new MeterReadingValidator(this, accountService);
+            meterReadingCsvHelper = new CsvHelper<MeterReading>();
         }
 
+        /// <inheritdoc/>
         public async Task<UploadMeterReadingsViewModel> UploadFromCsv(string csvContent)
         {
-            List<MeterReading> meterReadings = CsvHelper<MeterReading>.ReadCsv(csvContent);
+            List<MeterReading> meterReadings = meterReadingCsvHelper.ReadCsv(csvContent);
 
             foreach(MeterReading meterReading in meterReadings)
             {
                 if(validator.Validate(meterReading).IsValid)
                 {
-                    _dbContext.Add(meterReading);
+                    dbContext.Add(meterReading);
                 }
             }
 
-            int successCount = await _dbContext.SaveChangesAsync();
+            int successCount = await dbContext.SaveChangesAsync();
 
             return new UploadMeterReadingsViewModel(successCount, meterReadings.Count - successCount);
         }
+
+        /// <inheritdoc/>
         public async Task<bool> Create(MeterReading meterReading)
         {
             int created = 0;
 
             if(validator.Validate(meterReading).IsValid)
             {
-                _dbContext.MeterReadings.Add(meterReading);
-                created = await _dbContext.SaveChangesAsync();
+                dbContext.MeterReadings.Add(meterReading);
+                created = await dbContext.SaveChangesAsync();
             }
             
             return created >= 1;
         }
 
+        /// <inheritdoc/>
         public List<MeterReading> Get()
         {
-            return _dbContext.MeterReadings.ToList();
+            return dbContext.MeterReadings.ToList();
         }
+        
+        /// <inheritdoc/>
         public MeterReading? Get(int id)
         {
-            return _dbContext.MeterReadings.Find(id);
+            return dbContext.MeterReadings.Find(id);
         }
 
+        /// <inheritdoc/>
         public async Task<bool> Update(MeterReading meterReading)
         {
             int updated = 0;
 
             if (validator.Validate(meterReading).IsValid)
             {
-                _dbContext.MeterReadings.Update(meterReading);
-                updated = await _dbContext.SaveChangesAsync();
+                dbContext.MeterReadings.Update(meterReading);
+                updated = await dbContext.SaveChangesAsync();
             }
 
             return updated >= 1;
         }
 
+        /// <inheritdoc/>
         public async Task<bool> Delete(int id)
         {
-            MeterReading? meterReading = _dbContext.MeterReadings.Find(id);
+            MeterReading? meterReading = dbContext.MeterReadings.Find(id);
             if(meterReading == null)
             {
                 return false;
             }
 
-            _dbContext.MeterReadings.Remove(meterReading);
-            int deleted = await _dbContext.SaveChangesAsync();
+            dbContext.MeterReadings.Remove(meterReading);
+            int deleted = await dbContext.SaveChangesAsync();
             return deleted >= 1;
         }
 
+        /// <inheritdoc/>
         public bool DoesNotExist(MeterReading meterReading)
         {
-            return !_dbContext.MeterReadings.Any(x => x.AccountId == meterReading.AccountId && x.MeterReadingDateTime == meterReading.MeterReadingDateTime && x.MeterReadValue == meterReading.MeterReadValue);
+            return !dbContext.MeterReadings.Any(x => x.AccountId == meterReading.AccountId && x.MeterReadingDateTime == meterReading.MeterReadingDateTime && x.MeterReadValue == meterReading.MeterReadValue);
         }
     }
 }
